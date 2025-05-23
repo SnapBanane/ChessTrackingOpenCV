@@ -7,9 +7,15 @@ BOARD_SIZE = (10, 7)
 DETECTION_SCALE = 0.4
 ROI_MARGIN = 50
 
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+# Use GStreamer pipeline for libcamera
+gst_str = (
+    "libcamerasrc ! "
+    "video/x-raw,width=1280,height=720,framerate=30/1 ! "
+    "videoconvert ! "
+    "appsink"
+)
+cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
+
 cap.set(cv2.CAP_PROP_FPS, 60)
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -112,3 +118,5 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
+print(cv2.getBuildInformation())
