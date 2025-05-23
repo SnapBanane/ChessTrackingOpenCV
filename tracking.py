@@ -8,7 +8,7 @@ BOARD_SIZE = (10, 7)
 DETECTION_SCALE = 0.4
 ROI_MARGIN = 50
 
-width, height = 1280, 720
+width, height = 1536, 864
 cmd = [
     "libcamera-vid",
     "-t", "0",
