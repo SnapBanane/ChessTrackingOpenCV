@@ -10,7 +10,7 @@ ROI_MARGIN = 50
 # Use GStreamer pipeline for libcamera
 gst_str = (
     "libcamerasrc ! "
-    "video/x-raw,width=1280,height=720,framerate=30/1 ! "
+    "video/x-raw,format=RGB,width=1280,height=720,framerate=30/1 ! "
     "videoconvert ! "
     "appsink"
 )
