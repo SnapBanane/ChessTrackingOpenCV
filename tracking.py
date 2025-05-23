@@ -1,5 +1,6 @@
-import cv2
+import subprocess
 import numpy as np
+import cv2
 import time
 import threading
 
@@ -7,16 +8,18 @@ BOARD_SIZE = (10, 7)
 DETECTION_SCALE = 0.4
 ROI_MARGIN = 50
 
-# Use GStreamer pipeline for libcamera
-gst_str = (
-    "libcamerasrc ! "
-    "video/x-raw,format=RGB,width=1280,height=720,framerate=30/1 ! "
-    "videoconvert ! "
-    "appsink"
-)
-cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
+width, height = 1280, 720
+cmd = [
+    "libcamera-vid",
+    "-t", "0",
+    "--width", str(width),
+    "--height", str(height),
+    "--codec", "yuv420",
+    "-o", "-"
+]
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
-cap.set(cv2.CAP_PROP_FPS, 60)
+cap = None
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -31,11 +34,18 @@ DELAY_BUFFER_SIZE = 10
 
 while True:
     start_time = time.time()
-    ret, frame = cap.read()
-    if not ret:
-        break
+    if cap is None:
+        raw = proc.stdout.read(width * height * 3 // 2)  # YUV420p frame size
+        if not raw:
+            break
+        yuv = np.frombuffer(raw, dtype=np.uint8).reshape((height * 3 // 2, width))
+        frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
+    else:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-    cam_fps = cap.get(cv2.CAP_PROP_FPS)
+    cam_fps = cap.get(cv2.CAP_PROP_FPS) if cap is not None else 0
     debug_frame = frame.copy()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -116,7 +126,7 @@ while True:
     if cv2.waitKey(1) == 27:
         break
 
-cap.release()
+proc.terminate()
 cv2.destroyAllWindows()
 
 print(cv2.getBuildInformation())
